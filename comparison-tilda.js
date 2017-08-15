@@ -3,23 +3,34 @@
 
 
 const tilda = {
+	// Constant for output of a component
 	OUTPUT: 'OUTPUT'
 }
+// TODO: add midiToFrequency fn
 const mtof = (note) => note;
 
+
 // State
-{
-	oscillators: [
+const state = {
+	activeVoices: [
 		{
-			frequency: 400,
-			gain: 0.8
+			timestamp: 12012912912,
+			id: '12012912912',
+			note: 69,
+			velocity: 120
 		},
 		{
-			frequency: 800,
-			gain: 0.5
+			timestamp: 12012914002,
+			id: '12012914002',
+			note: 71,
+			velocity: 98
 		}
-	]
-}
+	],
+	ampModRate: 2,
+	ampModDepth: 0.5,
+	freqModRate: 6,
+	freqModDepth: 2 / 12 // 2 semitones
+};
 
 // Component
 const Osc = ({frequency, gain}) => ({
@@ -42,40 +53,6 @@ const Osc = ({frequency, gain}) => ({
 	input: 'osc'
 });
 
-const LFO = ({frequency, gain}) => ({
-	nodes: [
-		{
-			id: 'osc',
-			NodeType: 'oscillator',
-			type: 'sine',
-			frequency
-		},
-		{
-			id: 'gain',
-			NodeType: 'gain',
-			gain
-		}
-	],
-	connections: [
-		['osc', 'gain', tilda.OUTPUT]
-	]
-})
-
-const activeVoices = [
-	{
-		timestamp: 12012912912,
-		id: '12012912912',
-		note: 69,
-		velocity: 120
-	},
-	{
-		timestamp: 12012914002,
-		id: '12012914002',
-		note: 71,
-		velocity: 98
-	}
-]
-
 const Synth = ({
 	activeVoices,
 	ampModRate,
@@ -93,14 +70,14 @@ const Synth = ({
 		})),
 		{
 			id: 'ampMod',
-			...LFO({
+			...Osc({
 				frequency: ampModRate,
 				gain: ampModDepth
 			})
 		},
 		{
 			id: 'freqMod',
-			...LFO({
+			...Osc({
 				frequency: freqModRate,
 				gain: freqModDepth
 			})
@@ -115,13 +92,7 @@ const Synth = ({
 	}, [])
 });
 
-const synth = Synth({
-	activeVoices,
-	ampModRate: 2,
-	ampModDepth: 0.5,
-	freqModRate: 6,
-	freqModDepth: 2 / 12 // 2 semitones
-});
+const synth = Synth(state);
 
 console.log(JSON.stringify(synth, null, 4))
 
