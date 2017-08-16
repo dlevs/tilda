@@ -31,26 +31,32 @@ const createEnvelopeLifeCycleMethods = memoize((param) => ({
 const state = {
 	activeVoices: [
 		{
-			timestamp: 12012912912,
-			id: '12012912912',
+			id: '12012912912', // timestamp
 			note: 69,
 			velocity: 120
 		},
 		{
-			timestamp: 12012914002,
 			id: '12012914002',
 			note: 71,
 			velocity: 98
 		}
 	],
-	attack: 2,
-	decay: 300,
-	sustain: 0.3,
-	release: 2000,
-	ampModRate: 2,
-	ampModDepth: 0.5,
-	freqModRate: 6,
-	freqModDepth: 20
+	gainEnvelope: {
+		attack: 2,
+		decay: 300,
+		sustain: 0.3,
+		release: 2000
+	},
+	lfos: {
+		lfo1: {
+			frequency: 2,
+			gain: 0.5
+		},
+		lfo2: {
+			frequency: 6,
+			gain: 20
+		}
+	}
 };
 
 
@@ -69,23 +75,15 @@ const Osc = ({frequency, gain, ...otherProps}) => ({
 			gain
 		}
 	],
-	connections: [
-		['osc', 'gain', tilda.OUTPUT]
-	],
+	connections: ['osc', 'gain', tilda.OUTPUT],
 	input: 'osc',
 	...otherProps
 });
 
 const Synth = ({
 	activeVoices,
-	ampModRate,
-	ampModDepth,
-	freqModRate,
-	freqModDepth,
-	attack,
-	decay,
-	sustain,
-	release
+	gainEnvelope,
+	lfos
 }) => ({
 	nodes: [
 		...activeVoices.map(({note, velocity, id}) => (
@@ -93,26 +91,18 @@ const Synth = ({
 				id,
 				frequency: mtof(note),
 				gain: 0,
-				data: {velocity, attack, decay, sustain, release},
+				data: {velocity, ...gainEnvelope},
 				// TODO: Osc input is an oscillator. Think of interface for this.
 				...createEnvelopeLifeCycleMethods('gain')
 			})
 		)),
-		Osc({
-			id: 'ampMod',
-			frequency: ampModRate,
-			gain: ampModDepth
-		}),
-		Osc({
-			id: 'freqMod',
-			frequency: freqModRate,
-			gain: freqModDepth
-		})
+		Osc({id: 'lfo1', ...lfos.lfo1}),
+		Osc({id: 'lfo2', ...lfos.lfo2})
 	],
 	connections: activeVoices.reduce((connections, {id}) => {
 		return connections.concat([
-			['freqMod', `${id}.detune`],
-			['ampMod', `${id}.gain`],
+			['lfo1', `${id}.gain`],
+			['lfo2', `${id}.detune`],
 			[id, tilda.OUTPUT]
 		]);
 	}, [])
