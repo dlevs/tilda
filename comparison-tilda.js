@@ -29,11 +29,12 @@ const state = {
 	ampModRate: 2,
 	ampModDepth: 0.5,
 	freqModRate: 6,
-	freqModDepth: 2 / 12 // 2 semitones
+	freqModDepth: 20
 };
 
 // Component
-const Osc = ({frequency, gain}) => ({
+const Osc = ({id, frequency, gain}) => ({
+	id,
 	nodes: [
 		{
 			id: 'osc',
@@ -61,27 +62,23 @@ const Synth = ({
 	freqModDepth
 }) => ({
 	nodes: [
-		...activeVoices.map(({note, velocity, id}) => ({
-			id,
-			...Osc({
+		...activeVoices.map(({note, velocity, id}) => (
+			Osc({
+				id,
 				frequency: mtof(note),
 				gain: 127 / velocity
 			})
-		})),
-		{
+		)),
+		Osc({
 			id: 'ampMod',
-			...Osc({
-				frequency: ampModRate,
-				gain: ampModDepth
-			})
-		},
-		{
+			frequency: ampModRate,
+			gain: ampModDepth
+		}),
+		Osc({
 			id: 'freqMod',
-			...Osc({
-				frequency: freqModRate,
-				gain: freqModDepth
-			})
-		}
+			frequency: freqModRate,
+			gain: freqModDepth
+		})
 	],
 	connections: activeVoices.reduce((connections, {id}) => {
 		return connections.concat([
