@@ -43,6 +43,10 @@ const state = {
 			velocity: 98
 		}
 	],
+	attack: 2,
+	decay: 300,
+	sustain: 0.3,
+	release: 2000,
 	ampModRate: 2,
 	ampModDepth: 0.5,
 	freqModRate: 6,
@@ -77,7 +81,11 @@ const Synth = ({
 	ampModRate,
 	ampModDepth,
 	freqModRate,
-	freqModDepth
+	freqModDepth,
+	attack,
+	decay,
+	sustain,
+	release
 }) => ({
 	nodes: [
 		...activeVoices.map(({note, velocity, id}) => (
@@ -85,13 +93,7 @@ const Synth = ({
 				id,
 				frequency: mtof(note),
 				gain: 0,
-				data: {
-					velocity,
-					attack: 2,
-					decay: 300,
-					sustain: 0.3,
-					release: 2000
-				},
+				data: {velocity, attack, decay, sustain, release},
 				// TODO: Osc input is an oscillator. Think of interface for this.
 				...createEnvelopeLifeCycleMethods('gain')
 			})
