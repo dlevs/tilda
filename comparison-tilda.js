@@ -1,14 +1,31 @@
 // Tilda
 //------------------
 
+const memoize = require('lodash/memoize');
 
 const tilda = {
 	// Constant for output of a component
 	OUTPUT: 'OUTPUT'
-}
+};
 // TODO: add midiToFrequency fn
 const mtof = (note) => note;
+const createEnvelopeLifeCycleMethods = memoize((param) => ({
+	componentDidMount: (node, props) => {
+		const now = node.audioContext.currentTime;
+		const {attack, decay, sustain, velocity = 127, max = 1} = props.data;
+		const scale = velocity / 127;
 
+		node[param].setTargetAtTime(max * scale, now + attack);
+		node[param].setTargetAtTime(sustain * scale, now + attack + decay);
+	},
+	componentWillUnmount: (node, props, destroyNode) => {
+		const now = node.audioContext.currentTime;
+		const {release, min = 0} = props.data;
+
+		node[param].setTargetAtTime(min, now + release);
+		setTimeout(destroyNode, release + 20);
+	}
+}));
 
 // State
 const state = {
@@ -32,9 +49,9 @@ const state = {
 	freqModDepth: 20
 };
 
+
 // Component
-const Osc = ({id, frequency, gain}) => ({
-	id,
+const Osc = ({frequency, gain, ...otherProps}) => ({
 	nodes: [
 		{
 			id: 'osc',
@@ -51,7 +68,8 @@ const Osc = ({id, frequency, gain}) => ({
 	connections: [
 		['osc', 'gain', tilda.OUTPUT]
 	],
-	input: 'osc'
+	input: 'osc',
+	...otherProps
 });
 
 const Synth = ({
@@ -66,7 +84,16 @@ const Synth = ({
 			Osc({
 				id,
 				frequency: mtof(note),
-				gain: 127 / velocity
+				gain: 0,
+				data: {
+					velocity,
+					attack: 2,
+					decay: 300,
+					sustain: 0.3,
+					release: 2000
+				},
+				// TODO: Osc input is an oscillator. Think of interface for this.
+				...createEnvelopeLifeCycleMethods('gain')
 			})
 		)),
 		Osc({
@@ -91,7 +118,7 @@ const Synth = ({
 
 const synth = Synth(state);
 
-console.log(JSON.stringify(synth, null, 4))
+console.log(JSON.stringify(synth, null, 4));
 
 
 // const ctx = new AudioContext();
