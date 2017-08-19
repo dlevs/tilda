@@ -67,16 +67,21 @@ const Osc = ({frequency, gain, ...otherProps}) => ({
 			id: 'osc',
 			NodeType: 'oscillator',
 			type: 'sawtooth',
-			frequency
+			frequency,
+			connect: 'gain'
 		},
 		{
 			id: 'gain',
 			NodeType: 'gain',
-			gain
+			gain,
+			connect: tilda.OUTPUT
 		}
 	],
-	connections: ['osc', 'gain', tilda.OUTPUT],
-	input: 'osc',
+	interface: {
+		frequency: 'osc.frequency',
+		detune: 'osc.detune',
+		gain: 'gain.gain'
+	},
 	...otherProps
 });
 
@@ -92,20 +97,21 @@ const Synth = ({
 				frequency: mtof(note),
 				gain: 0,
 				data: {velocity, ...gainEnvelope},
-				// TODO: Osc input is an oscillator. Think of interface for this.
+				connect: tilda.OUTPUT,
 				...createEnvelopeLifeCycleMethods('gain')
 			})
 		)),
-		Osc({id: 'lfo1', ...lfos.lfo1}),
-		Osc({id: 'lfo2', ...lfos.lfo2})
-	],
-	connections: activeVoices.reduce((connections, {id}) => {
-		return connections.concat([
-			['lfo1', `${id}.gain`],
-			['lfo2', `${id}.detune`],
-			[id, tilda.OUTPUT]
-		]);
-	}, [])
+		Osc({
+			id: 'lfo1',
+			connect: activeVoices.map(({id}) => `${id}.gain`),
+			...lfos.lfo1
+		}),
+		Osc({
+			id: 'lfo2',
+			connect: activeVoices.map(({id}) => `${id}.detune`),
+			...lfos.lfo2
+		})
+	]
 });
 
 const synth = Synth(state);
